@@ -1,0 +1,40 @@
+
+main_video_host = rtsp://admin:a1s2d3f4@192.168.1.64:554/streaming/channels/101?rtsp_transport=udp
+main_video_port=8081
+secondary_video_host = rtsp://admin:a1s2d3f4@192.168.1.64:554/streaming/channels/101?rtsp_transport=udp
+secondary_video_port=8082
+
+arduino_ip=192.168.1.177
+arduino_port = 80
+arduino_socket_port=80
+fps=10
+resolution=300
+min_steering=1200
+max_steering=1800
+fuel_offset=50
+fuel_auto_reset = 0
+min_fuel=1000
+max_fuel=1500
+min_brake=1000
+max_brake=1600
+gear_P_arduino_value =2200
+gear_R_arduino_value =2070
+gear_N_arduino_value =1600
+gear_D_arduino_value =1300
+gear_L_arduino_value =1100
+
+
+
+fuel_slide_update_rate=5
+brake_slide_update_rate=2
+fuel_multiplier=1.0
+steering_TH = 150
+brake_multiplier=1.0
+steering_multiplier=1.0
+connected_to_system=1
+arduino_update_ms_rate=100
+path_to_save_video = C:\Users\hsari\Desktop\video_out\test
+connected_to_system = 2
+
+
+Camera_Locations = {"Location_1": {"pan": 0, "tilt": 1, "zoom": 0.0},"Location_2": {"pan": 0, "tilt": -0.35, "zoom": 0.8},"Location_3": {"pan": 0, "tilt": -1, "zoom": 0.0}}

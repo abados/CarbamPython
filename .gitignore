@@ -1,0 +1,6 @@
+# Ignore log files
+remote_driving_log.txt
+
+# Ignore large build files
+build/Motor9/Motor9.pkg
+dist/Motor9.exe
