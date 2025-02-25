@@ -55,7 +55,7 @@ print(video_connected)
 class RemoteDrivingApp(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.flag=False
         self.PTZ_controller = PTZCameraController("192.168.1.64", 8000, "OnvifUser", "a1s2d3f4")
 
         self.setWindowTitle("Remote Driving System")
@@ -120,7 +120,9 @@ class RemoteDrivingApp(QMainWindow):
         self.brake_reset_enable = False
         self.steering_reset_enable = False
 
-
+        self.inactivity_timer = QTimer(self)
+        self.inactivity_timer.timeout.connect(self.check_inactivity)
+        self.inactivity_timer.start(100)  # Check every 100 ms
         pygame.init()
         pygame.joystick.init()
         self.control_timer = QTimer()
@@ -234,7 +236,9 @@ class RemoteDrivingApp(QMainWindow):
 
         # Connect signals
         self.socket_connection = None
-
+        self.last_steering_time = time.time()
+        self.steering_reset_enable = False
+        self.steering_slider.setValue(0)
         # Start video streams
         self.reconnect_timer = QTimer()
         try:
@@ -537,15 +541,17 @@ class RemoteDrivingApp(QMainWindow):
         return False
 
     def process_joystick_keys(self):
+            
             for event in pygame.event.get():
+                self.steering_reset_enable = False
                 if event.type == pygame.QUIT:
-                    continue
+                    break
                 elif event.type == pygame.JOYAXISMOTION:
                     axis = event.axis  # Axis index
                     value = event.value  # Axis value (-1 to 1)
-                    print(event)
                 # Steering (Axis 0)
                     if axis == 0:
+                        #self.steering_slider.setValue(0)
                         print(f"Steering: {value:.3f}")
                         step = value * 1000  
                         if value>0: value=value+1
@@ -555,6 +561,7 @@ class RemoteDrivingApp(QMainWindow):
                         if abs(step) < tolerance:
                           self.steering_reset_enable = True
                           self.steering_slider.setValue(0)  # Reset the slider when near center
+                        self.last_steering_time = time.time()
                     # Accelerator (Axis 5)
                     elif axis == 5:
                         print(f"Accelerator: {value:.3f}")
@@ -565,9 +572,19 @@ class RemoteDrivingApp(QMainWindow):
                 # Brake (Axis 1)
                     elif axis == 1:
                         print(f"Brake: {value:.3f}")
-                        step = 1400 + (value * -400)  # Map to appropriate range
-                        print(f"f({value}) = {step}")
-                        self.brake_slider.setValue(int(step))
+
+                # Check if brake pedal is fully pressed (value == -1)
+                        if value <= -1:
+                    # Start synchronizing the brake pedal with the remote pedal
+                    # Gradual increase in brake slider based on full pedal press
+                            brake_value = 0  # Full brake when pedal is fully pressed
+                            self.brake_slider.setValue(brake_value)
+                            self.flag=True
+                            print(f"Brake slider synchronized: {brake_value}")
+                        elif value > -1 and self.flag:
+                            brake_value = np.interp(value, [-1, 1], [0, 100])  # Interpolate between 0 and 100
+                            self.brake_slider.setValue(int(brake_value))  # Gradual brake application
+                            print(f"Brake slider value: {int(brake_value)}")
 
                 elif event.type == pygame.JOYBUTTONDOWN:
                     print(f"Button {event.button} pressed")
@@ -617,6 +634,15 @@ class RemoteDrivingApp(QMainWindow):
                 elif event.type == pygame.JOYHATMOTION:
                     print(f"Hat {event.hat} moved to {event.value}")
 
+          
+    
+    def check_inactivity(self):
+        """Check if the steering hasn't been moved for more than 2 seconds."""
+        if time.time() - self.last_steering_time > 1:
+            if not self.steering_reset_enable:
+                print("Stopping motor (or resetting) after 2 seconds...")
+                self.steering_slider.setValue(0)  # Reset the slider to 0 (or stop the motor)
+                self.steering_reset_enable = True  # Disable reset flag after action
 
     def process_keys(self):
         """Handle simultaneous key presses and reset logic."""
@@ -748,6 +774,7 @@ class RemoteDrivingApp(QMainWindow):
 
     def on_brake_slider_change(self, value):
         pass
+        print("ON BRAKE FUNCCCC")
         self.brake_speed = value
         # self.log_message(f"brake value: {np.interp(value, [0, 100], [1000, 2000])}")
         # self.send_to_arduino(2, np.interp(value, [0, 100], [1000, 2000]))  # Send brake value to motor 2
@@ -879,6 +906,8 @@ class RemoteDrivingApp(QMainWindow):
                 # self.log_message(f"fuel_value: {fuel_value}")
 
                 brake_value = np.interp(self.brake_slider.value(), [0, 100], [self.max_brake, self.min_brake])
+                self.log_message(f"brake_value: {brake_value}")
+                self.log_message(f"break slider_value: {self.brake_slider.value()}")
                 if self.gear_value_number==2:
                     gear_value = self.gear_R_arduino_value
                 elif self.gear_value_number==1:
@@ -1030,8 +1059,5 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec_())
 
-
-    window.show()
-    sys.exit(app.exec_())
 
 
