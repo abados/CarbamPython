@@ -565,9 +565,9 @@ class RemoteDrivingApp(QMainWindow):
                     # Accelerator (Axis 5)
                     elif axis == 5:
                         print(f"Accelerator: {value:.3f}")
-                        step = 1225 + (value * -225)  # Map to appropriate range
-                        print(f"f({value}) = {step}")
-                        self.fuel_slider.setValue(int(step))
+                        fuel_value = -50*value +50  # Invert the range from 1 to -1
+                        self.fuel_slider.setValue(int(fuel_value))  # Gradual fuel application
+                        print(f"############Fuel slider value: {int(fuel_value)}")
 
                 # Brake (Axis 1)
                     elif axis == 1:
@@ -901,13 +901,14 @@ class RemoteDrivingApp(QMainWindow):
 
                 if self.fuel_slider.value()>2:
                     fuel_value = np.interp(self.fuel_slider.value(), [0, 100], [self.min_fuel, self.max_fuel])
+                    self.log_message(f"fuel_value: {fuel_value}")
+                    self.log_message(f"fuel slider_value: {self.fuel_slider.value()}")
                 else:
                     fuel_value = self.min_fuel-self.fuel_offset
                 # self.log_message(f"fuel_value: {fuel_value}")
 
                 brake_value = np.interp(self.brake_slider.value(), [0, 100], [self.max_brake, self.min_brake])
-                self.log_message(f"brake_value: {brake_value}")
-                self.log_message(f"break slider_value: {self.brake_slider.value()}")
+                
                 if self.gear_value_number==2:
                     gear_value = self.gear_R_arduino_value
                 elif self.gear_value_number==1:

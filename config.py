@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     "max_steering": 2000,
     "fuel_offset": 100,
     "min_fuel": 1000,
-    "max_fuel": 1550,
+    "max_fuel": 2500,
     "min_brake": 1000,
     "max_brake": 1800,
     "gear_P_arduino_value": 2000,
