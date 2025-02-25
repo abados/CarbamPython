@@ -1,3 +1,4 @@
+import math
 from PTZ_control import PTZCameraController
 import sys
 import threading
@@ -40,11 +41,7 @@ print(main_video_port)
 print(secondary_video_port)
 
 steering_factor = 3
-from threading import Thread
 from PyQt5.QtCore import pyqtSignal, QThread
-
-
-from threading import Thread
 import time
 
 
@@ -540,78 +537,86 @@ class RemoteDrivingApp(QMainWindow):
         return False
 
     def process_joystick_keys(self):
-        running = True
-        while running and pygame.joystick.get_count() > 0:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    continue
                 elif event.type == pygame.JOYAXISMOTION:
                     axis = event.axis  # Axis index
                     value = event.value  # Axis value (-1 to 1)
-                    if axis == 0:  # Steering axis
+                    print(event)
+                # Steering (Axis 0)
+                    if axis == 0:
                         print(f"Steering: {value:.3f}")
-                    elif axis == 5:  # Accelerator
+                        step = value * 1000  
+                        if value>0: value=value+1
+                        else: value=value-1
+                        self.steering_slider.setValue(int(value))
+                        tolerance = 50 
+                        if abs(step) < tolerance:
+                          self.steering_reset_enable = True
+                          self.steering_slider.setValue(0)  # Reset the slider when near center
+                    # Accelerator (Axis 5)
+                    elif axis == 5:
                         print(f"Accelerator: {value:.3f}")
-                    elif axis == 1:  # Brake
+                        step = 1225 + (value * -225)  # Map to appropriate range
+                        print(f"f({value}) = {step}")
+                        self.fuel_slider.setValue(int(step))
+
+                # Brake (Axis 1)
+                    elif axis == 1:
                         print(f"Brake: {value:.3f}")
+                        step = 1400 + (value * -400)  # Map to appropriate range
+                        print(f"f({value}) = {step}")
+                        self.brake_slider.setValue(int(step))
+
                 elif event.type == pygame.JOYBUTTONDOWN:
                     print(f"Button {event.button} pressed")
-                    pressed_button=event.button
-                    if pressed_button==0:
-                            print("Button 0 pressed")
-                    elif pressed_button==1:
-                            print("Button 1 pressed")
-                    elif pressed_button==2:
-                            print("Button 2 pressed")
-                            self.set_gear("D")
-                            self.gear_value_number = 1
-                            self.kiebord_interupt = False
-                            self.PTZ_controller.go_to_location(1)
-                    elif pressed_button==3:
-                            print("Button 3 pressed")
-                            self.set_gear("N")
-                            self.gear_value_number = 0
-                            self.kiebord_interupt = False
-                            self.PTZ_controller.go_to_location(3)
-                    elif pressed_button==4: 
-                            print("Button 4 pressed")
-                            self.set_gear("P")
-                            self.gear_value_number = 3
-                            self.kiebord_interupt = True
-                    elif pressed_button==5:
-                            print("Button 5 pressed")
-                            self.set_gear("R")
-                            self.gear_value_number = 2
-                            self.kiebord_interupt = False
-                            self.PTZ_controller.go_to_location(2)
-                    elif pressed_button==6:
-                            print("Button 6 pressed")
-                    elif pressed_button==7: 
-                            print("Button 7 pressed")
-                    elif pressed_button==8:
-                            print("Button 8 pressed")
-                            self.toggle_arm()
-                            self.arm_pressed = not self.arm_pressed
-                            self.fuel_slider.setValue(0)
-                            self.brake_slider.setValue(0)
-                    elif pressed_button==9:
-                            print("Button 9 pressed")
-                    elif pressed_button==10:
-                            print("Button 10 pressed")
-                    elif pressed_button==11:
-                            print("Button 11 pressed")
-                            self.send_all_motor_values()
-                    elif pressed_button==12:
-                            print("Button 12 pressed")
-                            running=False
+                    pressed_button = event.button
+                # Handle specific button presses
+                    if pressed_button == 0:
+                        print("Button 0 pressed")
+                    elif pressed_button == 1:
+                        print("Button 1 pressed")
+                    elif pressed_button == 2:
+                        print("Button 2 pressed")
+                        self.set_gear("D")
+                        self.gear_value_number = 1
+                        self.kiebord_interupt = False
+                        self.PTZ_controller.go_to_location(1)
+                    elif pressed_button == 3:
+                        print("Button 3 pressed")
+                        self.set_gear("N")
+                        self.gear_value_number = 0
+                        self.kiebord_interupt = False
+                        self.PTZ_controller.go_to_location(3)
+                    elif pressed_button == 4:
+                        print("Button 4 pressed")
+                        self.set_gear("P")
+                        self.gear_value_number = 3
+                        self.kiebord_interupt = True
+                    elif pressed_button == 5:
+                        print("Button 5 pressed")
+                        self.set_gear("R")
+                        self.gear_value_number = 2
+                        self.kiebord_interupt = False
+                        self.PTZ_controller.go_to_location(2)
+                    elif pressed_button == 8:
+                        print("Button 8 pressed")
+                        self.toggle_arm()
+                        self.arm_pressed = not self.arm_pressed
+                        self.fuel_slider.setValue(0)
+                        self.brake_slider.setValue(0)
+                    elif pressed_button == 11:
+                        print("Button 11 pressed")
+                        self.send_all_motor_values()
+                    elif pressed_button == 12:
+                        print("Button 12 pressed")
                     else:
                         print("Button Undefined Pressed")
-
 
                 elif event.type == pygame.JOYHATMOTION:
                     print(f"Hat {event.hat} moved to {event.value}")
 
-    #pygame.quit()
 
     def process_keys(self):
         """Handle simultaneous key presses and reset logic."""
@@ -1028,4 +1033,5 @@ if __name__ == "__main__":
 
     window.show()
     sys.exit(app.exec_())
+
 
