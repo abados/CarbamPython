@@ -17,9 +17,9 @@ min_fuel=1000
 max_fuel=2500
 min_brake=1000
 max_brake=1600
-gear_P_arduino_value =2200
-gear_R_arduino_value =2070
-gear_N_arduino_value =1600
+gear_P_arduino_value =3400
+gear_R_arduino_value =2400
+gear_N_arduino_value =1800
 gear_D_arduino_value =1300
 gear_L_arduino_value =1100
 
